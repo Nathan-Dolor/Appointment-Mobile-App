@@ -47,18 +47,27 @@ const RegisterScreen = () => {
       password,
       first_name,
       last_name,
-      type
+      type,
+      lunch_hour
     )
       .then((userCredentials) => {
         const user = userCredentials.user;
         console.log(user.email);
         const newUserRef = doc(db, "users", auth.currentUser?.uid);
+        type == "member" ? 
         setDoc(newUserRef, {
           first_name,
           last_name,
           email,
           type,
-        });
+        }) :
+        setDoc(newUserRef, {
+            first_name,
+            last_name,
+            email,
+            type,
+            lunch_hour,
+          });
       })
       .catch((error) => alert(error.message));
   };
@@ -124,9 +133,8 @@ const RegisterScreen = () => {
             
           <SelectDropdown
             data={lunch_hours}
-            // defaultValueByIndex={1}
-            // defaultValue={'Egypt'}
             onSelect={(selectedItem, index) => {
+                setLunchHour(selectedItem);
               console.log(selectedItem, index);
             }}
             defaultButtonText={"Select Lunch Hour"}

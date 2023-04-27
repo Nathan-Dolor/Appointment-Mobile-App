@@ -7,40 +7,63 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { db } from "../firebase";
-import { collection, getDocs, doc, setDoc, query, where } from "firebase/firestore";
+import { db, auth } from "../firebase";
+import {
+  collection,
+  getDocs,
+  doc,
+  setDoc,
+  query,
+  where,
+} from "firebase/firestore";
 import DatePicker from "react-date-picker";
 import SelectDropdown from "react-native-select-dropdown";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 
 const BookAppointmentScreen = () => {
+  const [staff_id, setStaffID] = useState("");
   const [date, setDate] = useState("");
-  const [value, onChange] = useState(new Date());
   const [time, setTime] = useState("");
   const [purpose, setPurpose] = useState("");
   const [staffMembers, setStaffMembers] = useState([]);
 
+  const [staff_ids, setStaffIDS] = useState([]);
+
   const navigation = useNavigation();
-  const time_slots = ["8am - 9am", "9am - 10am", "10am - 11am", "11am - 12pm", "12pm - 1pm", "1pm - 2pm"];
+  const time_slots = [
+    "8am - 9am",
+    "9am - 10am",
+    "10am - 11am",
+    "11am - 12pm",
+    "12pm - 1pm",
+    "1pm - 2pm",
+  ];
 
   useEffect(() => {
-    async function fetchData(){
-        const q = query(collection(db, "users"), where("type", "==", "staff"));
-        const querySnapshot = await getDocs(q);
-        setStaffMembers([]);
-        await querySnapshot.forEach((doc) => {
-            setStaffMembers((current) => [...current, doc.data().first_name + " " + doc.data().last_name]);
-        });
+    async function fetchData() {
+      const q = query(collection(db, "users"), where("type", "==", "staff"));
+      const querySnapshot = await getDocs(q);
+      setStaffMembers([]);
+      setStaffIDS([]);
+      await querySnapshot.forEach((doc) => {
+        setStaffMembers((current) => [
+          ...current,
+          doc.data().first_name + " " + doc.data().last_name,
+        ]);
+        setStaffIDS((current) => [...current, doc.id]);
+      });
     }
     fetchData();
-    
-  }, [])
+  }, []);
 
   const handleBooking = async () => {
     const newAppointmentRef = doc(collection(db, "appointments"));
     await setDoc(newAppointmentRef, {
+      user_id: auth.currentUser.uid,
+      staff_id: staff_id,
       date: date,
       time: time,
+      purpose: purpose,
     });
   };
 
@@ -49,10 +72,9 @@ const BookAppointmentScreen = () => {
       <View style={styles.inputContainer}>
         <SelectDropdown
           data={staffMembers}
-          // defaultValueByIndex={1}
-          // defaultValue={'Egypt'}
           onSelect={(selectedItem, index) => {
             console.log(selectedItem, index);
+            setStaffID(staff_ids[index]);
           }}
           defaultButtonText={"Select Staff"}
           buttonTextAfterSelection={(selectedItem, index) => {
@@ -84,42 +106,43 @@ const BookAppointmentScreen = () => {
           style={styles.input}
         />
         {/* <DatePicker onChange={(text) => onChange(text)} value={value} /> */}
-<SelectDropdown
-            data={time_slots}
-            onSelect={(selectedItem, index) => {
-              console.log(selectedItem, index);
-            }}
-            defaultButtonText={"Select Time Slot"}
-            buttonTextAfterSelection={(selectedItem, index) => {
-              return selectedItem;
-            }}
-            rowTextForSelection={(item, index) => {
-              return item;
-            }}
-            buttonStyle={styles.dropdown1BtnStyle}
-            buttonTextStyle={styles.dropdown1BtnTxtStyle}
-            renderDropdownIcon={(isOpened) => {
-              return (
-                <FontAwesome
-                  name={isOpened ? "chevron-up" : "chevron-down"}
-                  color={"#444"}
-                  size={18}
-                />
-              );
-            }}
-            dropdownIconPosition={"right"}
-            dropdownStyle={styles.dropdown1DropdownStyle}
-            rowStyle={styles.dropdown1RowStyle}
-            rowTextStyle={styles.dropdown1RowTxtStyle}
-          />
+        <SelectDropdown
+          data={time_slots}
+          onSelect={(selectedItem, index) => {
+            console.log(selectedItem, index);
+            setTime(selectedItem);
+          }}
+          defaultButtonText={"Select Time Slot"}
+          buttonTextAfterSelection={(selectedItem, index) => {
+            return selectedItem;
+          }}
+          rowTextForSelection={(item, index) => {
+            return item;
+          }}
+          buttonStyle={styles.dropdown1BtnStyle}
+          buttonTextStyle={styles.dropdown1BtnTxtStyle}
+          renderDropdownIcon={(isOpened) => {
+            return (
+              <FontAwesome
+                name={isOpened ? "chevron-up" : "chevron-down"}
+                color={"#444"}
+                size={18}
+              />
+            );
+          }}
+          dropdownIconPosition={"right"}
+          dropdownStyle={styles.dropdown1DropdownStyle}
+          rowStyle={styles.dropdown1RowStyle}
+          rowTextStyle={styles.dropdown1RowTxtStyle}
+        />
         <TextInput
           placeholder="Purpose of appointment"
           editable
           multiline
           numberOfLines={4}
           maxLength={40}
-          onChangeText={(text) => setPurpose(text)}
           value={purpose}
+          onChangeText={(text) => setPurpose(text)}
           style={styles.input}
         />
       </View>

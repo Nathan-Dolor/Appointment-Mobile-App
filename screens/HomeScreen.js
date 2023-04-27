@@ -1,4 +1,4 @@
-import { Button, StyleSheet, Text, Touchable, TouchableOpacity, View } from 'react-native'
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { auth, db } from '../firebase';
 import { signOut } from 'firebase/auth';
@@ -44,19 +44,36 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text>Email: { auth.currentUser?.email }, {user.first_name}</Text>
-      <TouchableOpacity
+      <Image style={styles.logo} source={require("../assets/favicon.png")} />
+      <Text style={styles.headerMessage}>Welcome, {user.first_name}!</Text>
+      {user.type == "member" ? 
+      [<TouchableOpacity
       onPress={goToBookingScreen}
         style={styles.button}
       >
         <Text style={styles.buttonText}>Book Appointment</Text>
-      </TouchableOpacity>
+      </TouchableOpacity>,
       <TouchableOpacity
       onPress={goToViewAppointmentsScreen}
         style={styles.button}
       >
         <Text style={styles.buttonText}>View Appointments</Text>
+      </TouchableOpacity>] : 
+      [
+      <TouchableOpacity
+      onPress={goToViewAppointmentsScreen}
+        style={styles.button}
+      >
+        <Text style={styles.buttonText}>View My Appointments</Text>
+      </TouchableOpacity>,
+      <TouchableOpacity
+      onPress={() => {}}
+        style={styles.button}
+      >
+        <Text style={styles.buttonText}>View All Appointments</Text>
       </TouchableOpacity>
+      ]}
+      
       <TouchableOpacity
       onPress={handleSignOut}
         style={styles.button}
@@ -88,4 +105,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 16,
   },
+  headerMessage: {
+    marginTop: 10,
+    marginBottom: 40,
+    fontSize: 18,
+  }
 })
