@@ -4,7 +4,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Switch,
+  Pressable,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
@@ -17,6 +17,8 @@ import { doc, setDoc } from "firebase/firestore";
 import SwitchSelector from "react-native-switch-selector";
 import SelectDropdown from "react-native-select-dropdown";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTogglePasswordVisibility } from "../hooks/useTogglePasswordVisibility";
 
 const RegisterScreen = () => {
   const [first_name, setFirstName] = useState("");
@@ -29,6 +31,9 @@ const RegisterScreen = () => {
 
   const navigation = useNavigation();
   const lunch_hours = ["11am - 12pm", "12pm - 1pm"];
+
+  const { passwordVisibility, rightIcon, handlePasswordVisibility } =
+    useTogglePasswordVisibility();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -54,31 +59,37 @@ const RegisterScreen = () => {
         const user = userCredentials.user;
         console.log(user.email);
         const newUserRef = doc(db, "users", auth.currentUser?.uid);
-        type == "member" ? 
-        setDoc(newUserRef, {
-          first_name,
-          last_name,
-          email,
-          type,
-        }) :
-        setDoc(newUserRef, {
-            first_name,
-            last_name,
-            email,
-            type,
-            lunch_hour,
-          });
+        type == "member"
+          ? setDoc(newUserRef, {
+              first_name,
+              last_name,
+              email,
+              type,
+            })
+          : setDoc(newUserRef, {
+              first_name,
+              last_name,
+              email,
+              type,
+              lunch_hour,
+            });
       })
       .catch((error) => alert(error.message));
   };
 
-  function toggleSwitch(value) {    
-    value ? (setType("staff"), setIsEnabled(true)) : (setType("member"), setIsEnabled(false));
+  function toggleSwitch(value) {
+    value
+      ? (setType("staff"), setIsEnabled(true))
+      : (setType("member"), setIsEnabled(false));
   }
+
+  const goToLogin = () => {
+    navigation.replace("Login");
+  };
 
   return (
     <View style={styles.container} behavior="padding">
-      <Text>Register</Text>
+      <Text style={styles.title}>Register</Text>
       <View style={styles.inputContainer}>
         <TextInput
           placeholder="First Name"
@@ -100,22 +111,23 @@ const RegisterScreen = () => {
           keyboardType="email-address"
           style={styles.input}
         />
+      </View>
+      <View style={styles.passwordInputContainer}>
         <TextInput
           placeholder="Password"
           value={password}
           onChangeText={(text) => setPassword(text)}
           autoCapitalize="none"
-          style={styles.input}
-          secureTextEntry
+          enablesReturnKeyAutomatically
+          textContentType="newPassword"
+          autoCorrect={false}
+          style={styles.passwordInput}
+          secureTextEntry={passwordVisibility}
         />
+        <Pressable onPress={handlePasswordVisibility}>
+          <MaterialCommunityIcons name={rightIcon} size={22} color="#232323" />
+        </Pressable>
       </View>
-      {/* <Switch
-        trackColor={{ false: "#767577", true: "#81b0ff" }}
-        thumbColor={isEnabled ? "#f5dd4b" : "#f4f3f4"}
-        ios_backgroundColor="#3e3e3e"
-        onValueChange={toggleSwitch}
-        value={isEnabled}
-      /> */}
       <View style={styles.selecterContainer}>
         <SwitchSelector
           style={styles.selector}
@@ -124,17 +136,16 @@ const RegisterScreen = () => {
             { label: "Member", value: false },
             { label: "Staff", value: true },
           ]}
-          onPress={value => toggleSwitch(value)}
-          buttonColor={"#0782F9"}
+          onPress={(value) => toggleSwitch(value)}
+          buttonColor={"#2a3374"}
         />
       </View>
-      <View style={styles.inputContainer}>
+      <View style={styles.dropdownContainer}>
         {isEnabled ? (
-            
           <SelectDropdown
             data={lunch_hours}
             onSelect={(selectedItem, index) => {
-                setLunchHour(selectedItem);
+              setLunchHour(selectedItem);
               console.log(selectedItem, index);
             }}
             defaultButtonText={"Select Lunch Hour"}
@@ -151,7 +162,7 @@ const RegisterScreen = () => {
                 <FontAwesome
                   name={isOpened ? "chevron-up" : "chevron-down"}
                   color={"#444"}
-                  size={18}
+                  size={16}
                 />
               );
             }}
@@ -167,6 +178,12 @@ const RegisterScreen = () => {
           <Text style={styles.buttonText}>Register</Text>
         </TouchableOpacity>
       </View>
+      <Text style={styles.linkContainer}>
+        Already have an account?
+        <Text onPress={goToLogin}>
+          <Text style={styles.linkText}> Login</Text>
+        </Text>
+      </Text>
     </View>
   );
 };
@@ -178,6 +195,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#e3f2fd",
+  },
+  title: {
+    marginTop: 5,
+    marginBottom: 40,
+    fontSize: 24,
+    fontWeight: "bold",
   },
   inputContainer: {
     width: "80%",
@@ -188,6 +212,19 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     marginTop: 5,
+  },
+  passwordInputContainer: {
+    backgroundColor: "white",
+    width: "80%",
+    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 5,
+  },
+  passwordInput: {
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    width: "90%",
   },
   selecterContainer: {
     width: "50%",
@@ -200,10 +237,10 @@ const styles = StyleSheet.create({
     width: "60%",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 40,
+    marginTop: 30,
   },
   button: {
-    backgroundColor: "#0782F9",
+    backgroundColor: "#2a3374",
     width: "100%",
     padding: 15,
     borderRadius: 10,
@@ -214,11 +251,26 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 16,
   },
-  dropdown1BtnTxtStyle: { color: "#444", textAlign: "left" },
+  dropdownContainer: {
+    marginTop: 20,
+  },
+  dropdown1BtnStyle: {
+    width: "80%",
+    height: 50,
+    backgroundColor: "#FFF",
+    borderRadius: 8,
+  },
+  dropdown1BtnTxtStyle: { color: "#444", textAlign: "left", fontSize: 16, },
   dropdown1DropdownStyle: { backgroundColor: "#EFEFEF" },
   dropdown1RowStyle: {
     backgroundColor: "#EFEFEF",
     borderBottomColor: "#C5C5C5",
   },
   dropdown1RowTxtStyle: { color: "#444", textAlign: "left" },
+  linkContainer: {
+    marginTop: 15,
+  },
+  linkText: {
+    color: "#f11737",
+  },
 });
