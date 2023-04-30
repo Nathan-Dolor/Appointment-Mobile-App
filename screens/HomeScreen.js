@@ -66,12 +66,12 @@ const HomeScreen = () => {
           <Text style={styles.buttonText}>All Appointments</Text>
         </TouchableOpacity>
       ) : (
-        <TouchableOpacity onPress={goToBookingScreen} style={styles.button}>
+        <TouchableOpacity key={4} onPress={goToBookingScreen} style={styles.button}>
           <Text style={styles.buttonText}>Book Appointment</Text>
         </TouchableOpacity>
       ),
 
-      <TouchableOpacity key={4} onPress={handleSignOut} style={styles.signOutButton}>
+      <TouchableOpacity key={5} onPress={handleSignOut} style={styles.signOutButton}>
         <Text style={styles.buttonText}>Sign Out</Text>
       </TouchableOpacity>
     ]}
